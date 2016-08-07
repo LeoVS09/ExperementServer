@@ -1,45 +1,38 @@
 #include "Server.h"
-
+#include "lol.h"
 
 
 Server::Server(){
 	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (result != 0) {
-		cerr << "WSAStartup failed: " << result << "\n";
-		throw result;
-	}
+	if (result) throw lol().error("WSAStartup failed: ", result);
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags = AI_PASSIVE;
 	result = getaddrinfo("127.0.0.1", "8000", &hints, &addr);
-	if (result != 0) {
-		cerr << "Getaddrinfo failed: " << result << "\n";
+	if (result) {
 		WSACleanup();
-		throw 1;
+		throw lol().error("getaddrinfo failed: ", result);
 	}
 	listen_socket = socket(addr->ai_family, addr->ai_socktype,
 		addr->ai_protocol);
 	if (listen_socket == INVALID_SOCKET) {
-		cerr << "Error at socket: " << WSAGetLastError() << "\n";
 		freeaddrinfo(addr);
 		WSACleanup();
-		throw 1;
+		throw lol().error("Error at socket: ", WSAGetLastError());
 	}
 	result = bind(listen_socket, addr->ai_addr, (int)addr->ai_addrlen);
 	if (result == SOCKET_ERROR) {
-		cerr << "bind failed with error: " << WSAGetLastError() << "\n";
 		freeaddrinfo(addr);
 		closesocket(listen_socket);
 		WSACleanup();
-		throw 1;
+		throw lol().error("bind failed with error: ", WSAGetLastError());;
 	}
 	if (listen(listen_socket, SOMAXCONN) == SOCKET_ERROR) {
-		cerr << "listen failed with error: " << WSAGetLastError() << "\n";
 		closesocket(listen_socket);
 		WSACleanup();
-		throw 1;
+		throw lol().error("listen failed with error: ", WSAGetLastError());;
 	}
 }
 
@@ -47,20 +40,19 @@ void Server::start(){
 	while (true) {
 		client_socket = accept(listen_socket, NULL, NULL);
 		if (client_socket == INVALID_SOCKET) {
-			cerr << "accept failed: " << WSAGetLastError() << "\n";
 			closesocket(listen_socket);
 			WSACleanup();
-			throw 1;
+			throw lol().error("accept failed: ", WSAGetLastError());
 		}
 		int result = recv(client_socket, buf, max_client_buffer_size, 0);
 		stringstream response;
 		stringstream response_body;
 		if (result == SOCKET_ERROR) {
-			cerr << "recv failed: " << result << "\n";
+			lol().log(lol().error("recv failed: ",result));
 			closesocket(client_socket);
 		}
-		else if (result == 0) {
-			cerr << "connection closed...\n";
+		else if (!result) {
+			lol().log("connection closed...");
 		}
 		else if (result > 0) {
 			buf[result] = '\0';
@@ -80,7 +72,7 @@ void Server::start(){
 				response.str().length(), 0);
 
 			if (result == SOCKET_ERROR) {
-				cerr << "send failed: " << WSAGetLastError() << "\n";
+				lol().log(lol().error("send failed: ", WSAGetLastError()));
 			}
 			closesocket(client_socket);
 		}
