@@ -3,35 +3,38 @@
 
 
 Server::Server(){
-	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (result) throw lol().error("WSAStartup failed: ", result);
+
+
 	ZeroMemory(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_protocol = IPPROTO_TCP;
 	hints.ai_flags = AI_PASSIVE;
-	result = getaddrinfo("127.0.0.1", "8000", &hints, &addr);
-	if (result) {
-		WSACleanup();
-		throw lol().error("getaddrinfo failed: ", result);
-	}
-	listen_socket = socket(addr->ai_family, addr->ai_socktype,
-		addr->ai_protocol);
+	int result = getaddrinfo("127.0.0.1", "8000", &hints, &addr);
+	if (result) throw lol().error("getaddrinfo failed: ", result);
+
+
+
+	listen_socket = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
 	if (listen_socket == INVALID_SOCKET) {
 		freeaddrinfo(addr);
-		WSACleanup();
+		
 		throw lol().error("Error at socket: ", WSAGetLastError());
 	}
+
+
 	result = bind(listen_socket, addr->ai_addr, (int)addr->ai_addrlen);
 	if (result == SOCKET_ERROR) {
 		freeaddrinfo(addr);
 		closesocket(listen_socket);
-		WSACleanup();
+		
 		throw lol().error("bind failed with error: ", WSAGetLastError());;
 	}
+
+
 	if (listen(listen_socket, SOMAXCONN) == SOCKET_ERROR) {
 		closesocket(listen_socket);
-		WSACleanup();
+		
 		throw lol().error("listen failed with error: ", WSAGetLastError());;
 	}
 }
@@ -41,7 +44,7 @@ void Server::start(){
 		client_socket = accept(listen_socket, NULL, NULL);
 		if (client_socket == INVALID_SOCKET) {
 			closesocket(listen_socket);
-			WSACleanup();
+			
 			throw lol().error("accept failed: ", WSAGetLastError());
 		}
 		int result = recv(client_socket, buf, max_client_buffer_size, 0);
@@ -83,5 +86,14 @@ void Server::start(){
 Server::~Server(){
 	closesocket(listen_socket);
 	freeaddrinfo(addr);
+}
+
+WSA::WSA(){
+	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (result) throw lol().error("WSAStartup failed: ", result);
+}
+
+
+WSA::~WSA(){
 	WSACleanup();
 }

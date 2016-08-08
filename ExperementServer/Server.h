@@ -2,8 +2,15 @@
 #include"main.h"
 
 
-class Server{
+class WSA {
 	WSADATA wsaData;
+public:
+	WSA();
+	~WSA();
+};
+
+class Server{
+	WSA wsa;
 	struct addrinfo* addr = NULL;
 	struct addrinfo hints;
 	static const int max_client_buffer_size = 1024;
