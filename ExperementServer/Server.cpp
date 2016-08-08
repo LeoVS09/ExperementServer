@@ -2,39 +2,23 @@
 #include "lol.h"
 
 
-Server::Server(){
-
-
-	ZeroMemory(&hints, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = AI_PASSIVE;
-	int result = getaddrinfo("127.0.0.1", "8000", &hints, &addr);
-	if (result) throw lol().error("getaddrinfo failed: ", result);
-
-
-
-	listen_socket = socket(addr->ai_family, addr->ai_socktype, addr->ai_protocol);
+Server::Server():wsa(),addr("127.0.0.1", "8000"){
+	
+	listen_socket = socket(addr.getFamily(), addr.getSockType(), addr.getProtocol());
 	if (listen_socket == INVALID_SOCKET) {
-		freeaddrinfo(addr);
-		
 		throw lol().error("Error at socket: ", WSAGetLastError());
 	}
 
 
-	result = bind(listen_socket, addr->ai_addr, (int)addr->ai_addrlen);
+	int result = bind(listen_socket, addr.getAddr(), addr.getAddrlen());
 	if (result == SOCKET_ERROR) {
-		freeaddrinfo(addr);
 		closesocket(listen_socket);
-		
 		throw lol().error("bind failed with error: ", WSAGetLastError());;
 	}
 
 
 	if (listen(listen_socket, SOMAXCONN) == SOCKET_ERROR) {
 		closesocket(listen_socket);
-		
 		throw lol().error("listen failed with error: ", WSAGetLastError());;
 	}
 }
@@ -85,7 +69,8 @@ void Server::start(){
 
 Server::~Server(){
 	closesocket(listen_socket);
-	freeaddrinfo(addr);
+	delete &addr;
+	delete &wsa;
 }
 
 WSA::WSA(){
@@ -96,4 +81,38 @@ WSA::WSA(){
 
 WSA::~WSA(){
 	WSACleanup();
+}
+
+AddrInfo::AddrInfo(string Ip, string Port):ip(Ip),port(Port){
+	ZeroMemory(&hints, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags = AI_PASSIVE;
+	int result = getaddrinfo(ip.c_str(), port.c_str(), &hints, &addr);
+	if (result) throw lol().error("getaddrinfo failed: ", result);
+}
+
+int AddrInfo::getFamily(){
+	return addr->ai_family;
+}
+
+int AddrInfo::getSockType(){
+	return addr->ai_socktype;
+}
+
+int AddrInfo::getProtocol(){
+	return addr->ai_protocol;
+}
+
+int AddrInfo::getAddrlen(){
+	return (int)addr->ai_addrlen;
+}
+
+sockaddr * AddrInfo::getAddr(){
+	return addr->ai_addr;
+}
+
+AddrInfo::~AddrInfo(){
+	freeaddrinfo(addr);
 }
