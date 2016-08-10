@@ -2,16 +2,15 @@
 #include "lol.h"
 
 
-Server::Server(){
-	wsa = new WSA();
-	addr = new AddrInfo("127.0.0.1", "8000");
-	listen_socket = socket(addr->getFamily(), addr->getSockType(), addr->getProtocol());
+Server::Server():wsa(),addr("127.0.0.1", "8000"){
+
+	listen_socket = socket(addr.getFamily(), addr.getSockType(), addr.getProtocol());
 	if (listen_socket == INVALID_SOCKET) {
 		throw lol().error("Error at socket: ", WSAGetLastError());
 	}
 
 
-	int result = bind(listen_socket, addr->getAddr(), addr->getAddrlen());
+	int result = bind(listen_socket, addr.getAddr(), addr.getAddrlen());
 	if (result == SOCKET_ERROR) {
 		closesocket(listen_socket);
 		throw lol().error("bind failed with error: ", WSAGetLastError());;
@@ -70,8 +69,8 @@ void Server::start(){
 
 Server::~Server(){
 	closesocket(listen_socket);
-	delete addr;
-	delete wsa;
+	addr.~AddrInfo();
+	wsa.~WSA();
 }
 
 WSA::WSA(){
