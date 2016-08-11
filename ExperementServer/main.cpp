@@ -4,7 +4,7 @@
 int main() {
 	cout << "lol" << endl;
 	try {
-		Server server;
+		Server server("127.0.0.1", "8000");
 		server.start();
 	}
 	catch (int e) {

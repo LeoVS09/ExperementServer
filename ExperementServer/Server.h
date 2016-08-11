@@ -6,6 +6,7 @@ class WSA {
 	WSADATA wsaData;
 public:
 	WSA();
+	int getLastError();
 	~WSA();
 };
 
@@ -23,15 +24,30 @@ public:
 	sockaddr * getAddr();
 	~AddrInfo();
 };
+class Socket {
+	WSA *wsa;
+	AddrInfo *addr;
+	SOCKET soc;
+public:
+	Socket();
+	Socket(SOCKET, WSA *);
+	Socket * listenit(WSA &, AddrInfo &);
+	Socket * acceptit();
+	int reciv(char *buf, int size, int flag = 0);
+	void sendit(string, int flag = 0);
+	~Socket();
+private:
+	void createSocket();
+	void bindit();
+};
 class Server{
 	WSA wsa;
 	AddrInfo addr;
 	static const int max_client_buffer_size = 1024;
 	char buf[max_client_buffer_size];
-	int client_socket = INVALID_SOCKET;
-	int listen_socket;
+	Socket listen_socket;
 public:
-	Server();
+	Server(string ip, string port);
 	void start();
 	~Server();
 };

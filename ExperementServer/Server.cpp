@@ -2,46 +2,20 @@
 #include "lol.h"
 
 
-Server::Server():wsa(),addr("127.0.0.1", "8000"){
+Server::Server(string ip,string port):wsa(),addr(ip,port),listen_socket(){
 
-	listen_socket = socket(addr.getFamily(), addr.getSockType(), addr.getProtocol());
-	if (listen_socket == INVALID_SOCKET) {
-		throw lol().error("Error at socket: ", WSAGetLastError());
-	}
+	listen_socket.listenit(wsa,addr);
 
-
-	int result = bind(listen_socket, addr.getAddr(), addr.getAddrlen());
-	if (result == SOCKET_ERROR) {
-		closesocket(listen_socket);
-		throw lol().error("bind failed with error: ", WSAGetLastError());;
-	}
-
-
-	if (listen(listen_socket, SOMAXCONN) == SOCKET_ERROR) {
-		closesocket(listen_socket);
-		throw lol().error("listen failed with error: ", WSAGetLastError());;
-	}
 }
 
 void Server::start(){
 	while (true) {
-		client_socket = accept(listen_socket, NULL, NULL);
-		if (client_socket == INVALID_SOCKET) {
-			closesocket(listen_socket);
-			
-			throw lol().error("accept failed: ", WSAGetLastError());
-		}
-		int result = recv(client_socket, buf, max_client_buffer_size, 0);
+		Socket * client_socket = listen_socket.acceptit();
 		stringstream response;
 		stringstream response_body;
-		if (result == SOCKET_ERROR) {
-			lol().log(lol().error("recv failed: ",result));
-			closesocket(client_socket);
-		}
-		else if (!result) {
-			lol().log("connection closed...");
-		}
-		else if (result > 0) {
+		int result = client_socket->reciv(buf, max_client_buffer_size);
+		
+		if (result > 0) {
 			buf[result] = '\0';
 			response_body << "<title>Test C++ HTTP Server</title>\n"
 				<< "<h1>Test page</h1>\n"
@@ -55,20 +29,15 @@ void Server::start(){
 				<< "Content-Length: " << response_body.str().length()
 				<< "\r\n\r\n"
 				<< response_body.str();
-			result = send(client_socket, response.str().c_str(),
-				response.str().length(), 0);
-
-			if (result == SOCKET_ERROR) {
-				lol().log(lol().error("send failed: ", WSAGetLastError()));
-			}
-			closesocket(client_socket);
+			client_socket->sendit(response.str());
+			delete client_socket;
 		}
 	}
 }
 
 
 Server::~Server(){
-	closesocket(listen_socket);
+	listen_socket;
 	addr.~AddrInfo();
 	wsa.~WSA();
 }
@@ -76,6 +45,10 @@ Server::~Server(){
 WSA::WSA(){
 	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (result) throw lol().error("WSAStartup failed: ", result);
+}
+
+int WSA::getLastError(){
+	return WSAGetLastError();
 }
 
 
@@ -115,4 +88,58 @@ sockaddr * AddrInfo::getAddr(){
 
 AddrInfo::~AddrInfo(){
 	freeaddrinfo(addr);
+}
+
+Socket::Socket(){
+}
+
+Socket::Socket(SOCKET s, WSA *w):soc(s){
+	wsa = w;
+	if (s == INVALID_SOCKET)
+		throw lol().error("accept failed: ", wsa->getLastError());
+}
+
+Socket * Socket::listenit(WSA &w, AddrInfo &a){
+	wsa = &w;
+	addr = &a;
+	createSocket();
+	bindit();
+	if (listen(soc, SOMAXCONN) == SOCKET_ERROR)
+		throw lol().error("listen failed with error: ", wsa->getLastError());
+	return this;
+}
+
+Socket * Socket::acceptit(){
+	return new Socket(accept(soc, NULL, NULL),wsa);
+}
+
+int Socket::reciv(char * buf, int size, int flag){
+	int result = recv(soc, buf, size, flag);
+	if (result == SOCKET_ERROR)
+		lol().log(lol().error("recv failed: ", result));
+	else if (!result) 
+		lol().log("connection closed...");
+	return result;
+}
+
+void Socket::sendit(string response, int flag){
+	int result = send(soc, response.c_str(),response.length(), flag);
+	if (result == SOCKET_ERROR) {
+		lol().log(lol().error("send failed: ", wsa->getLastError()));
+	}
+}
+
+Socket::~Socket(){
+	closesocket(soc);
+}
+
+void Socket::createSocket(){
+	soc = socket(addr->getFamily(), addr->getSockType(), addr->getProtocol());
+	if(soc == INVALID_SOCKET)
+		throw lol().error("Error at socket: ", wsa->getLastError());
+}
+
+void Socket::bindit(){
+	if (bind(soc, addr->getAddr(), addr->getAddrlen()) == SOCKET_ERROR)
+		throw lol().error("bind failed with error: ", wsa->getLastError());
 }
