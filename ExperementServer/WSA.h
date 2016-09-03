@@ -5,6 +5,6 @@ class WSA {
 	WSADATA wsaData;
 public:
 	WSA();
-	int getLastError();
+	int getLastError() const;
 	~WSA();
 };

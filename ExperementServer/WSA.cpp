@@ -6,7 +6,7 @@ WSA::WSA(){
 	if (result) throw lol().error("WSAStartup failed: ", result);
 }
 
-int WSA::getLastError(){
+int WSA::getLastError()const{
 	return WSAGetLastError();
 }
 

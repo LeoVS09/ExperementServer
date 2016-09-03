@@ -1,6 +1,7 @@
 #include "lol.h"
 
 
+WSA lol::wsa;
 
 lol::lol(){
 }
@@ -17,6 +18,7 @@ lol::~lol(){
 }
 
 void lol::log(Error err){
+	if (!err.num) err.num = wsa.getLastError();
 	cout << err.text << err.num << endl;
 	cerr << err.text << err.num << endl;
 }

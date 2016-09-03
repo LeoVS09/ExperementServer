@@ -2,9 +2,9 @@
 #include "lol.h"
 
 
-Server::Server(string ip,string port):wsa(),addr(ip,port),listen_socket(){
+Server::Server(string ip,string port):addr(ip,port),listen_socket(){
 
-	listen_socket.listenit(wsa,addr);
+	listen_socket.listenit(addr);
 
 }
 
@@ -39,7 +39,6 @@ void Server::start(){
 Server::~Server(){
 	listen_socket;
 	addr.~AddrInfo();
-	wsa.~WSA();
 }
 
 

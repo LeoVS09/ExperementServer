@@ -1,29 +1,26 @@
 #include"Socket.h"
-#include"WSA.h"
 #include"AddrInfo.h"
 #include"lol.h"
 
 Socket::Socket(){
 }
 
-Socket::Socket(SOCKET s, WSA *w):soc(s){
-	wsa = w;
+Socket::Socket(SOCKET s):soc(s){
 	if (s == INVALID_SOCKET)
-		throw lol().error("accept failed: ", wsa->getLastError());
+		throw lol().error("accept failed: ");
 }
 
-Socket * Socket::listenit(WSA &w, AddrInfo &a){
-	wsa = &w;
+Socket * Socket::listenit(AddrInfo &a){
 	addr = &a;
 	createSocket();
 	bindit();
 	if (listen(soc, SOMAXCONN) == SOCKET_ERROR)
-		throw lol().error("listen failed with error: ", wsa->getLastError());
+		throw lol().error("listen failed with error: ");
 	return this;
 }
 
 Socket * Socket::acceptit(){
-	return new Socket(accept(soc, NULL, NULL),wsa);
+	return new Socket(accept(soc, NULL, NULL));
 }
 
 int Socket::reciv(char * buf, int size, int flag){
@@ -38,7 +35,7 @@ int Socket::reciv(char * buf, int size, int flag){
 void Socket::sendit(string response, int flag){
 	int result = send(soc, response.c_str(),response.length(), flag);
 	if (result == SOCKET_ERROR) {
-		lol().log(lol().error("send failed: ", wsa->getLastError()));
+		lol().log(lol().error("send failed: "));
 	}
 }
 
@@ -49,10 +46,10 @@ Socket::~Socket(){
 void Socket::createSocket(){
 	soc = socket(addr->getFamily(), addr->getSockType(), addr->getProtocol());
 	if(soc == INVALID_SOCKET)
-		throw lol().error("Error at socket: ", wsa->getLastError());
+		throw lol().error("Error at socket: ");
 }
 
 void Socket::bindit(){
 	if (bind(soc, addr->getAddr(), addr->getAddrlen()) == SOCKET_ERROR)
-		throw lol().error("bind failed with error: ", wsa->getLastError());
+		throw lol().error("bind failed with error: ");
 }
