@@ -1,45 +1,10 @@
 #pragma once
 #include"main.h"
+#include"AddrInfo.h"
+#include"WSA.h"
+#include"Socket.h"
 
 
-class WSA {
-	WSADATA wsaData;
-public:
-	WSA();
-	int getLastError();
-	~WSA();
-};
-
-class AddrInfo {
-	struct addrinfo* addr = NULL;
-	struct addrinfo hints;
-	string ip;
-	string port;
-public:
-	AddrInfo(string,string);
-	int getFamily();
-	int getSockType();
-	int getProtocol();
-	int getAddrlen();
-	sockaddr * getAddr();
-	~AddrInfo();
-};
-class Socket {
-	WSA *wsa;
-	AddrInfo *addr;
-	SOCKET soc;
-public:
-	Socket();
-	Socket(SOCKET, WSA *);
-	Socket * listenit(WSA &, AddrInfo &);
-	Socket * acceptit();
-	int reciv(char *buf, int size, int flag = 0);
-	void sendit(string, int flag = 0);
-	~Socket();
-private:
-	void createSocket();
-	void bindit();
-};
 class Server{
 	WSA wsa;
 	AddrInfo addr;

@@ -143,14 +143,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AddrInfo.h" />
     <ClInclude Include="lol.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="Socket.h" />
+    <ClInclude Include="WSA.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AddrInfo.cpp" />
     <ClCompile Include="lol.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="Socket.cpp" />
+    <ClCompile Include="WSA.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
